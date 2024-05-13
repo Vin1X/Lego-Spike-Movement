@@ -18,7 +18,10 @@ class Lego_Spike:
 
     def calculate_steering(self, diff=None):
         diff = self.color_sensor.reflected_light() - 50
+        diff /= 2
+        print(diff)
         reduced_speed = (self.max_speed * 2) / self.max_absolute_difference * abs(diff) - self.max_speed
+        reduced_speed *= -1
         if diff < 0:
             left_speed = self.max_speed - reduced_speed
             right_speed = - self.max_speed
