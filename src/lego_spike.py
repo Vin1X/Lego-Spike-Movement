@@ -1,18 +1,28 @@
-from lego_color_sensor import Lego_Color_Sensor as ColorSensor
-from lego_motor import Lego_Motor as Motor
+from lego_color_sensor import LegoColorSensor
+from lego_motor import LegoMotor
 from buildhat import Hat
+from lego_motor_pair import LegoMotorPair
 
 
 class Lego_Spike:
     def __init__(self):
-        self.motora = Motor("A")
-        self.motorb = Motor("B")
-        self.color_sensor = ColorSensor("C")
+        self.color_sensor = LegoColorSensor("A")
         self.hat = Hat()
+        self.motor_pair = LegoMotorPair("D", "C")
+        self.max_speed = 20
+        self.max_absolute_difference = 50
 
-    def start_up(self):
-        print(self.hat.get())
+    def follow_line(self):
+        right_speed, left_speed = self.calculate_steering()
+        self.motor_pair.start(speedr=right_speed, speedl=left_speed)
 
-    def straight(self):
-        self.motora.forwards()
-        self.motorb.forwards(-100)  # 2nd motor is reversed
+    def calculate_steering(self, diff=None):
+        diff = self.color_sensor.reflected_light() - 50
+        reduced_speed = (self.max_speed * 2) / self.max_absolute_difference * abs(diff) - self.max_speed
+        if diff < 0:
+            left_speed = self.max_speed - reduced_speed
+            right_speed = - self.max_speed
+        else:
+            left_speed = self.max_speed
+            right_speed = reduced_speed
+        return right_speed, left_speed
