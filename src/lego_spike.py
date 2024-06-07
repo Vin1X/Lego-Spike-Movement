@@ -2,6 +2,8 @@ from lego_color_sensor import LegoColorSensor
 from lego_motor import LegoMotor
 from buildhat import Hat
 from lego_motor_pair import LegoMotorPair
+from simple_pid import PID
+import time
 
 
 class Lego_Spike:
@@ -9,33 +11,45 @@ class Lego_Spike:
         self.color_sensor_r = LegoColorSensor("C")
         self.color_sensor_l = LegoColorSensor("D")
         self.hat = Hat()
-        self.motor_pair = LegoMotorPair("B", "A")
-        self.max_speed = 20
+
+        # Left motor is inverted
+        self.motor_pair = LegoMotorPair("A", "B") # A = Left, B = Right
+        self.max_speed = 5
         self.max_absolute_difference = 100
+        self.pid = PID(-.1, 0, 0, setpoint=0)
 
     def follow_line(self):
-        # diff = self.get_diff_single(self.color_sensor_r)
         diff = self.get_diff_double()
-        print(diff)
-        right_speed, left_speed = self.calculate_steering(diff)
-        self.motor_pair.start(speedr=right_speed, speedl=left_speed)
+        diff = self.compute_pid(diff)
+        left_speed, right_speed = self.calculate_steering(diff)
+        left_speed *= -1
+        time.sleep(.5)
+        self.motor_pair.start(speedl=left_speed, speedr=right_speed)
 
     def calculate_steering(self, diff: float) -> tuple:
-        reduced_speed = (self.max_speed * 2) / self.max_absolute_difference * abs(diff) - self.max_speed
-        reduced_speed *= -1
-        if diff < 0:
+        reduced_speed = (self.max_speed * 2) / self.max_absolute_difference * 2 * abs(diff)
+
+        if diff > 0:
             left_speed = self.max_speed - reduced_speed
-            right_speed = - self.max_speed
+            right_speed = self.max_speed
         else:
             left_speed = self.max_speed
-            right_speed = reduced_speed
-        return right_speed, left_speed
+            right_speed = self.max_speed - reduced_speed
+        print("Reducedspeed:", reduced_speed, "Left:", left_speed, "Right:", right_speed)
+        return left_speed, right_speed
 
     def get_diff_single(self, color_sensor) -> float:
         diff = color_sensor.reflected_light() - 50
         return diff
 
+    # Positive value = deviation to right
+    # Negative value = deviation to left
     def get_diff_double(self) -> float:
         l_refl = self.color_sensor_l.reflected_light()
         r_refl = self.color_sensor_r.reflected_light()
         return r_refl - l_refl
+
+    def compute_pid(self, diff: float) -> float:
+        pid = self.pid(diff)
+        # print("diff:", diff, "pid:", pid)
+        return pid
