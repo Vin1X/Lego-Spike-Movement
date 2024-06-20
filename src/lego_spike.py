@@ -14,9 +14,9 @@ class Lego_Spike:
 
         # Left motor is inverted
         self.motor_pair = LegoMotorPair("A", "B") # A = Left, B = Right
-        self.max_speed = 30
+        self.max_speed = 50
         self.max_absolute_difference = 100
-        self.pid = PID(.5, .1, 0, setpoint=0)
+        self.pid = PID(.6, 0.1, .05, setpoint=0)
 
     def follow_line(self):
         diff = self.get_diff_double()
@@ -28,10 +28,10 @@ class Lego_Spike:
 
     def calculate_steering(self, diff: float) -> tuple:
         #print(diff)
-        diff = min(100, diff)
-        diff = max(-100, diff)
+        diff = min(self.max_absolute_difference, diff)
+        diff = max(-self.max_absolute_difference, diff)
         #print("\t\t", diff, "\n")
-        reduced_speed = (self.max_speed * 2) / self.max_absolute_difference * 2 * abs(diff)
+        reduced_speed = (self.max_speed * 2) / self.max_absolute_difference * abs(diff)
 
         if diff > 0:
             left_speed = self.max_speed - reduced_speed
