@@ -33,7 +33,7 @@ class LegoMotorPair:
 
     # Start motor with specific speed for each motor
     def start(self, speedl=None, speedr=None):
-        self.motor_pair.start(speedl, speedr)
+        self.motor_pair.start(speedl=speedl, speedr=speedr)
 
     # Stop motor
     def stop(self):
